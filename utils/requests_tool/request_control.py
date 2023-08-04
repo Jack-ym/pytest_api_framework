@@ -4,6 +4,8 @@
 @Time   : 2023/8/3 11:07
 @Author : zhaiyanming
 """
+from utils.other_tools.models import TestCase,ResponseData
+import ast
 
 class RequestControl:
     """
@@ -17,3 +19,11 @@ class RequestControl:
         #兼容上传文件又要上传其他类型参数
             try:
                 _data = self.__yaml_case.data
+                for key,value in ast.literal_eval(cache_regular(str(_data)))['data'].items():
+                    if "mutipart/form-data" in str(self.__yaml_case.headers.values()):
+                        file_data[key] = str(value)
+                    else:
+                        file_data[key] = value
+            except KeyError:
+                ...
+
