@@ -145,6 +145,7 @@ class CurrentRequestSetCache(BaseModel):
     jsonpath: Text
     name: Text
 
+
 class TestCase(BaseModel):
     url: Text
     method: Text
@@ -163,3 +164,113 @@ class TestCase(BaseModel):
     teardown: Union[List["TearDown"], None] = None
     current_request_set_cache: Optional[List["CurrentRequestSetCache"]]
     sleep: Optional[Union[int, float]]
+
+
+class ResponseData(BaseModel):
+    url: Text
+    is_run: Union[None, bool, Text]
+    detail: Text
+    response_data: Text
+    request_body: Any
+    method: Text
+    sql_data: Dict
+    yaml_data: "TestCase"
+    headers: Dict
+    cookie: Dict
+    assert_data: Dict
+    res_time: Union[int, float]
+    status_code: int
+    teardown: List["TearDown"] = None
+    teardown_sql: Union[None, List]
+    body: Any
+
+
+class DingTalk(BaseModel):
+    webhook: Union[Text, None]
+    secret: Union[Text, None]
+
+
+class MySqlDB(BaseModel):
+    switch: bool = False
+    host: Union[Text, None] = None
+    user: Union[Text, None] = None
+    password: Union[Text, None] = None
+    port: Union[int, None] = 3306
+
+
+class Webhook(BaseModel):
+    webhook: Union[Text, None]
+
+
+class Email(BaseModel):
+    send_user: Union[Text, None]
+    email_host: Union[Text, None]
+    stamp_key: Union[Text, None]
+    # 收件人
+    send_list: Union[Text, None]
+
+
+class Config(BaseModel):
+    project_name: Text
+    env: Text
+    tester_name: Text
+    notification_type: Text = '0'
+    excel_report: bool
+    ding_talk: "DingTalk"
+    mysql_db: "MySqlDB"
+    mirror_source: Text
+    wechat: "Webhook"
+    email: "Email"
+    lark: "Webhook"
+    real_time_update_test_case: bool = False
+    host: Text
+    app_host: Union[Text, None]
+
+
+@unique
+class AllureAttachmentType(Enum):
+    """allure报告的文件类型枚举"""
+    TEXT = "txt"
+    CSV = "csv"
+    TSV = "tsv"
+    URI_LIST = "uri"
+
+    HTML = "html"
+    XML = "xml"
+    JSON = "json"
+    YAML = "yaml"
+    PCAP = "pcap"
+
+    PNG = "png"
+    JPG = "jpg"
+    SVG = "svg"
+    GIF = "gif"
+    BMP = "bmp"
+    TIFF = "tiff"
+
+    MP4 = "mp4"
+    OGG = "ogg"
+    WEBM = "webm"
+
+    PDF = "pdf"
+
+
+@unique
+class AssertMethod(Enum):
+    """断言类型"""
+    equals = "=="
+    less_than = "lt"
+    less_than_or_equals = "le"
+    greater_than = "gt"
+    greater_than_or_equals = "ge"
+    not_equals = "not_eq"
+    string_equals = "str_eq"
+    lenth_equals = "len_eq"
+    lenth_greater_than = "len_gt"
+    lenth_greater_than_or_equals = "len_ge"
+    lenth_less_than = "len_lt"
+    lenth_less_than_or_equals = "len_le"
+    contains = "contains"
+    contained_by = "contained_by"
+    startswith = "startswith"
+    endwith = "endwith"
