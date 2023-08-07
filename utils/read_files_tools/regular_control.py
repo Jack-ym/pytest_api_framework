@@ -100,3 +100,65 @@ def sql_regular(value, res=None):
 
 def cache_regular(value):
     from utils.cache_process.cache_control import CacheHandler
+    """
+    通过正则的方式读取缓存中的内容
+    eg:
+        $cache{login_init}
+    """
+    # 正则获取$cache{login_init}的值-->login_init
+    regular_datas = re.findall(r"\$cache\{(.*?)\}", value)
+    # 拿到的是一个list，循环数据
+    for regular_data in regular_datas:
+        value_types = ['int:', 'bool:', 'list:', 'dict:', 'tuple:', 'float:']
+        if any(i in regular_data for i in value_types) is True:
+            value_types = regular_data.split(":")[0]
+            regular_data = regular_data.split(":")[1]
+            pattern = re.compile(r'\'\$cache\{' + value_types.split(":")[0] + ":" + regular_data + r'\}\'')
+        else:
+            pattern = re.compile(
+                r'\$cache\{' + regular_data.replace('$', "\$").replace('[', '\[') + r'\}'
+            )
+        try:
+            cache_data = CacheHandler.get_cache(regular_data)
+            # 使用 sub方法，替换已经拿到的内容
+            value = re.sub(pattern, str(cache_data), value)
+        except Exception:
+            pass
+    return value
+
+
+def regular(target):
+    """使用正则替换请求数据"""
+    try:
+        regular_pattern = r'\${{(.*?)}}'
+        while re.findall(regular_pattern,target):
+            key = re.search(regular_pattern,target).group(1)
+            value_types = ['int:', 'bool:', 'list:', 'dict:', 'tuple:', 'float:']
+            if any(i in key for i in value_types)is True:
+                func_name = key.split(":")[1].split("(")[0]
+                value_name = key.split(":")[1].split("(")[1][:-1]
+                if value_name=="":
+                    value_data=getattr(Context(),func_name)()
+                else:
+                    value_data=getattr(Context(),func_name)(*value_name.split(","))
+                regular_int_pattern = r'\'\${{(.*?)}}\''
+                target = re.sub(regular_int_pattern,str(value_data),target,1)
+            else:
+                func_name = key.split("(")[0]
+                value_name = key.split("(")[1][:-1]
+                if value_name =="":
+                    value_data =getattr(Context(),func_name)()
+                else:
+                    value_data=getattr(Context(),func_name)(*value_name.split(","))
+                target=re.sub(regular_pattern,str(value_data),target,1)
+        return target
+    except AttributeError:
+        ERROR.logger.error("未找到对应要替换的数据，请检查数据是否正确 %s",target)
+        raise
+    except IndexError:
+        ERROR.logger.error("yaml中的${{}} 函数方法不正确，正确愈发实例：${{get_time()}}")
+        raise
+
+if __name__ == '__main__':
+    a = "${{host()}} aaa "
+    b = regular(a)
